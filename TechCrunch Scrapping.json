@@ -1,0 +1,209 @@
+{
+  "name": "Scrapping",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bf15469f-e2a7-4cc4-af27-3feaa67aecd1",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/category/artificial-intelligence/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "ff6368ce-6bc4-458a-b59c-6dc804014083",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the raw input - in your case it's a plain string, not an items array\nconst raw = $input.first().json.data;\nlet html;\nif (typeof raw === 'string') {\n  html = raw;\n} else if (Array.isArray(raw)) {\n  const first = raw[0];\n  html = first?.json?.data || first?.json?.html || first?.json?.body || first?.data;\n} else {\n  html = JSON.stringify(raw);\n}\nif (!html || typeof html !== 'string') {\n  return [{ json: { error: 'Could not extract HTML string', gotType: typeof html } }];\n}\nconst articles = [];\nconst chunks = html.split('<li class=\"wp-block-post ').slice(1);\nfor (const chunk of chunks) {\n  const titleMatch = chunk.match(\n    /<a[^>]*href=\"([^\"]+)\"\\s+class=\"loop-card__title-link\"[^>]*>([^<]*)<\\/a>/\n  );\n  if (!titleMatch) continue;\n\n  // Post ID sits at the very start of the chunk, e.g. \"post-3158531 post type-post...\"\n  const postIdMatch = chunk.match(/^post-(\\d+)/);\n\n  const imgMatch = chunk.match(/<img[^>]*src=\"([^\"]+)\"[^>]*alt=\"([^\"]*)\"/);\n  const categoryMatch = chunk.match(/class=\"loop-card__cat\"[^>]*>([^<]+)</);\n  const timeMatch = chunk.match(/<time datetime=\"([^\"]+)\"[^>]*>\\s*([^<]+)<\\/time>/);\n  const authorBlockMatch = chunk.match(/loop-card__author-list\">([\\s\\S]*?)<\\/ul>/);\n  const authors = authorBlockMatch\n    ? [...authorBlockMatch[1].matchAll(/class=\"loop-card__author\"[^>]*>([^<]+)<\\/a>/g)]\n        .map(m => m[1].trim())\n    : [];\n\n  articles.push({\n    postId: postIdMatch ? postIdMatch[1] : null,\n    title: titleMatch[2].trim(),\n    url: titleMatch[1],\n    image: imgMatch ? imgMatch[1] : null,\n    imageAlt: imgMatch ? imgMatch[2] : null,\n    category: categoryMatch ? categoryMatch[1].trim() : null,\n    isBrief: /loop-card--brief/.test(chunk),\n    publishedAt: timeMatch ? timeMatch[1] : null,\n    publishedRelative: timeMatch ? timeMatch[2].trim() : null,\n    authors,\n  });\n}\nconst seen = new Set();\nconst uniqueArticles = articles.filter(a => {\n  if (seen.has(a.url)) return false;\n  seen.add(a.url);\n  return true;\n});\nreturn uniqueArticles.map(a => ({ json: a }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "60653dd4-e393-41cd-9af2-32201a239704",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M",
+          "mode": "list",
+          "cachedResultName": "TechCrunch Scraping",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Post ID": "={{ $json.postId }}",
+            "Image URL": "={{ $json.image }}",
+            "Title": "={{ $json.title }}",
+            "Category": "={{ $json.category }}",
+            "URL": "={{ $json.url }}",
+            "Posted Date": "={{ $json.publishedAt }}",
+            "Author": "={{ $json.authors }}"
+          },
+          "matchingColumns": [
+            "Post ID"
+          ],
+          "schema": [
+            {
+              "id": "Post ID",
+              "displayName": "Post ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Image URL",
+              "displayName": "Image URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Author",
+              "displayName": "Author",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Posted Date",
+              "displayName": "Posted Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "id": "5bc0e370-207d-4f8e-a7ad-ebf76fefda99",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "D37khZ9LQx9cayAM",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "274571d5-c060-4184-9817-217e358c79a6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4acf5f8d4f88027ba8f3a8008dbbd8b10cbc5a6eb40f3087431f0d9a98785434"
+  },
+  "nodeGroups": [],
+  "id": "kIeX0bUDlfpQgnPf",
+  "tags": []
+}

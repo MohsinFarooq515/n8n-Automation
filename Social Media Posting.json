@@ -1,0 +1,467 @@
+{
+  "name": "Social Media Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1vEiyLXpax4rbuYwcQk3DKzB6XDqfyZ8XTT2yBuelawA/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Automation(n8n)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vEiyLXpax4rbuYwcQk3DKzB6XDqfyZ8XTT2yBuelawA/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "finished"
+            },
+            {
+              "lookupColumn": "Posted?",
+              "lookupValue": "false"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -448,
+        64
+      ],
+      "id": "3f8f7283-49a0-4a89-8e2d-214403cef5a3",
+      "name": "Get Url",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "D37khZ9LQx9cayAM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are an expert social media copywriter.\nWrite a high-performing caption for the topic: “{{ $json.Topic }}”.\nThe video features ultra-realistic, AI-generated ASMR content where glass objects are being sliced with a knife.\nMake it scroll-stopping, short, and engaging.\n\nGenerate a short, non-generic caption for each platform. Captions must follow exact max-lengths and these best practices:\n\n\n• TikTok (max 4000 chars)\n– Lead with CTA or question\n– 3–5 trending hashtags\n– Sprinkle emojis for tone\n\n• LinkedIn (max 3000 chars)\n– Lead with a strong professional hook\n– Keep a professional, insightful tone\n– 3–5 relevant hashtags\n– Minimal, tasteful emojis\n\n• Facebook post (max 3000 chars)\n–\tFirst 125 chars must punch\n–\tUse line breaks or emojis\n–\tInclude CTA within first 125\n–\t2–3 relevant hashtags\n\nOutput only valid JSON.\nExample output:\n\n{\n\"TikTok\":\"…\",\n\"LinkedIn\":\"…\",\n\"Facebook\":\"…\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -192,
+        64
+      ],
+      "id": "acdf7c39-6182-4956-a52f-070f48c6a119",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Z4VefSELmDafvoVR",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1vEiyLXpax4rbuYwcQk3DKzB6XDqfyZ8XTT2yBuelawA/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Automation(n8n)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vEiyLXpax4rbuYwcQk3DKzB6XDqfyZ8XTT2yBuelawA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Topic": "={{ $('Get Url').item.json.Topic }}",
+            "Posted?": "TRUE"
+          },
+          "matchingColumns": [
+            "Topic"
+          ],
+          "schema": [
+            {
+              "id": "Topic",
+              "displayName": "Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video",
+              "displayName": "video",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Posted?",
+              "displayName": "Posted?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1200,
+        304
+      ],
+      "id": "fec0ec5a-7adb-4afc-8615-58ce127cdfb7",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "D37khZ9LQx9cayAM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.buffer.com",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"query\": \"mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id text status dueAt channelId } } ... on MutationError { message } } }\",\n  \"variables\": {\n    \"input\": {\n      \"text\": $('Parse Captions').item.json.TikTok,\n      \"channelId\": $('APIs').item.json.tiktok_id,\n      \"schedulingType\": \"automatic\",\n      \"mode\": \"shareNow\",\n      \"assets\": [\n        {\n          \"video\": {\n            \"url\": $('Get Url').item.json.video,\n            \"metadata\": { \"thumbnailOffset\": 2000 }\n          }\n        }\n      ]\n    }\n  }\n} }}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        608,
+        112
+      ],
+      "id": "bb5e168e-0066-44ef-a77c-f1daa85bc3c9",
+      "name": "TikTok",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "EB1CdyPOzj5vV3Br",
+          "name": "Custom Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.buffer.com",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"query\": \"mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id text status dueAt channelId } } ... on MutationError { message } } }\",\n  \"variables\": {\n    \"input\": {\n      \"text\": $('Parse Captions').item.json.LinkedIn,\n      \"channelId\": $('APIs').item.json.linkedin_id,\n      \"schedulingType\": \"automatic\",\n      \"mode\": \"shareNow\",\n      \"assets\": [\n        {\n          \"video\": {\n            \"url\": $('Get Url').item.json.video,\n            \"metadata\": { \"thumbnailOffset\": 2000 }\n          }\n        }\n      ]\n    }\n  }\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        608,
+        304
+      ],
+      "id": "6e671c16-dda2-403f-a1df-4c31d348577e",
+      "name": "LinkedIn",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "EB1CdyPOzj5vV3Br",
+          "name": "Custom Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.buffer.com",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"query\": \"mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id text status dueAt channelId } } ... on MutationError { message } } }\",\n  \"variables\": {\n    \"input\": {\n      \"text\": $('Parse Captions').item.json.Facebook,\n      \"channelId\": $('APIs').item.json.facebook_id,\n      \"schedulingType\": \"automatic\",\n      \"mode\": \"shareNow\",\n      \"metadata\": { \"facebook\": { \"type\": \"post\" } },\n      \"assets\": [\n        {\n          \"video\": {\n            \"url\": $('Get Url').item.json.video,\n            \"metadata\": { \"thumbnailOffset\": 2000 }\n          }\n        }\n      ]\n    }\n  }\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        608,
+        496
+      ],
+      "id": "6e18f5f5-6dfc-4f22-bf71-f945a6922b89",
+      "name": "Facebook",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "EB1CdyPOzj5vV3Br",
+          "name": "Custom Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        912,
+        288
+      ],
+      "id": "2ce03c05-c734-467f-ab5e-ef8f33682b8c",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Grab the raw model text\nconst raw = $input.item.json.output[0].content[0].text;\n\n// Extract the JSON object (drops code fences / any surrounding text)\nlet jsonStr = raw.match(/{[\\s\\S]*}/)[0];\n\n// Fix stray literal line breaks / tabs INSIDE string values,\n// which are illegal in JSON and cause \"Bad control character\".\nlet cleaned = \"\";\nlet insideString = false;\nfor (let i = 0; i < jsonStr.length; i++) {\n  const ch = jsonStr[i];\n  if (ch === '\"' && jsonStr[i - 1] !== '\\\\') {\n    insideString = !insideString;\n    cleaned += ch;\n  } else if (insideString && ch === '\\n') {\n    cleaned += '\\\\n';\n  } else if (insideString && ch === '\\r') {\n    // skip carriage returns\n  } else if (insideString && ch === '\\t') {\n    cleaned += '\\\\t';\n  } else {\n    cleaned += ch;\n  }\n}\n\nconst parsed = JSON.parse(cleaned);\n\nreturn {\n  TikTok: parsed.TikTok,\n  LinkedIn: parsed.LinkedIn,\n  Facebook: parsed.Facebook,\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        64
+      ],
+      "id": "1e2354bc-a458-432a-a5bb-505393311bf9",
+      "name": "Parse Captions"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n\"api_key\": \"PPNvOcsRQf4Zx2fqGIty8iZIDfAtqpD2A9Pqms9-jqu\", \"tiktok_id\": \"6a8bd40cccaf649a67060606\", \"linkedin_id\": \"6a8d3f56ccaf649a671123cb\", \"facebook_id\": \"6a8d10b0ccaf649a670f5b86\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        288,
+        304
+      ],
+      "id": "6f90ad07-ef2e-4425-9ce3-c747009ce7bf",
+      "name": "APIs"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        64
+      ],
+      "id": "c07a69d1-af27-4a46-9b16-50798245aedb",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Url": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Parse Captions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Facebook": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Captions": {
+      "main": [
+        [
+          {
+            "node": "APIs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "APIs": {
+      "main": [
+        [
+          {
+            "node": "TikTok",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "43118fde-9324-4fe5-9a0d-e8bcd489d69e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4acf5f8d4f88027ba8f3a8008dbbd8b10cbc5a6eb40f3087431f0d9a98785434"
+  },
+  "nodeGroups": [],
+  "id": "bbjluZspy3pejcAD",
+  "tags": []
+}
