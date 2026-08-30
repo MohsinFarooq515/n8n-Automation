@@ -1,0 +1,711 @@
+{
+  "name": "Scrapping to Posting",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "16918c9d-236d-4acf-b607-d0a40ab893f7",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/category/artificial-intelligence/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "51f01302-f737-4656-86fa-dc120b1b592d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the raw input - in your case it's a plain string, not an items array\nconst raw = $input.first().json.data;\nlet html;\nif (typeof raw === 'string') {\n  html = raw;\n} else if (Array.isArray(raw)) {\n  const first = raw[0];\n  html = first?.json?.data || first?.json?.html || first?.json?.body || first?.data;\n} else {\n  html = JSON.stringify(raw);\n}\nif (!html || typeof html !== 'string') {\n  return [{ json: { error: 'Could not extract HTML string', gotType: typeof html } }];\n}\nconst articles = [];\nconst chunks = html.split('<li class=\"wp-block-post ').slice(1);\nfor (const chunk of chunks) {\n  const titleMatch = chunk.match(\n    /<a[^>]*href=\"([^\"]+)\"\\s+class=\"loop-card__title-link\"[^>]*>([^<]*)<\\/a>/\n  );\n  if (!titleMatch) continue;\n\n  // Post ID sits at the very start of the chunk, e.g. \"post-3158531 post type-post...\"\n  const postIdMatch = chunk.match(/^post-(\\d+)/);\n\n  const imgMatch = chunk.match(/<img[^>]*src=\"([^\"]+)\"[^>]*alt=\"([^\"]*)\"/);\n  const categoryMatch = chunk.match(/class=\"loop-card__cat\"[^>]*>([^<]+)</);\n  const timeMatch = chunk.match(/<time datetime=\"([^\"]+)\"[^>]*>\\s*([^<]+)<\\/time>/);\n  const authorBlockMatch = chunk.match(/loop-card__author-list\">([\\s\\S]*?)<\\/ul>/);\n  const authors = authorBlockMatch\n    ? [...authorBlockMatch[1].matchAll(/class=\"loop-card__author\"[^>]*>([^<]+)<\\/a>/g)]\n        .map(m => m[1].trim())\n    : [];\n\n  articles.push({\n    postId: postIdMatch ? postIdMatch[1] : null,\n    title: titleMatch[2].trim(),\n    url: titleMatch[1],\n    image: imgMatch ? imgMatch[1] : null,\n    imageAlt: imgMatch ? imgMatch[2] : null,\n    category: categoryMatch ? categoryMatch[1].trim() : null,\n    isBrief: /loop-card--brief/.test(chunk),\n    publishedAt: timeMatch ? timeMatch[1] : null,\n    publishedRelative: timeMatch ? timeMatch[2].trim() : null,\n    authors,\n  });\n}\nconst seen = new Set();\nconst uniqueArticles = articles.filter(a => {\n  if (seen.has(a.url)) return false;\n  seen.add(a.url);\n  return true;\n});\nreturn uniqueArticles.map(a => ({ json: a }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "db949be3-b643-484c-b32e-62276b76c139",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M",
+          "mode": "list",
+          "cachedResultName": "TechCrunch Scraping",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Post ID": "={{ $('Code in JavaScript').item.json.postId }}",
+            "Image URL": "={{ $('Code in JavaScript').item.json.image }}",
+            "Title": "={{ $('Code in JavaScript').item.json.title }}",
+            "Category": "={{ $('Code in JavaScript').item.json.category }}",
+            "URL": "={{ $('Code in JavaScript').item.json.url }}",
+            "Posted Date": "={{ $('Code in JavaScript').item.json.publishedAt }}",
+            "Author": "={{ $('Code in JavaScript').item.json.authors }}",
+            "Summary": "={{ $json.output[0].content[0].text }}"
+          },
+          "matchingColumns": [
+            "Post ID"
+          ],
+          "schema": [
+            {
+              "id": "Post ID",
+              "displayName": "Post ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Image URL",
+              "displayName": "Image URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Author",
+              "displayName": "Author",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Posted Date",
+              "displayName": "Posted Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1504,
+        0
+      ],
+      "id": "0f1c017d-d3c7-422b-9727-78d6affec089",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "D37khZ9LQx9cayAM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        0
+      ],
+      "id": "e13794e1-f4d3-4b5c-8b9f-a15a2cc40629",
+      "name": "Get Article Content"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "articleText",
+              "cssSelector": ".entry-content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "fe697dca-9d07-4f63-a9c3-5ed844a11142",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You are a technology-news summarizer. Create an accurate and concise summary using only the supplied article. Return only the summary without a heading, introduction, bullet points, or commentary."
+            },
+            {
+              "content": "=Summarize the following TechCrunch article in 2–3 concise sentences. Include the main event, the organizations or people involved, and the most important result or consequence.\n\nArticle:\n{{ $json.articleText }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1088,
+        0
+      ],
+      "id": "598c5573-f112-4dc2-90d4-1a08ba3af59a",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Z4VefSELmDafvoVR",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M",
+          "mode": "list",
+          "cachedResultName": "TechCrunch Scraping",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Posted",
+              "lookupValue": "false"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        272,
+        320
+      ],
+      "id": "d6e57a49-9783-4257-bedf-0d64517ee182",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "D37khZ9LQx9cayAM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const row = item.json;\n\n  let authors = row.Author || '';\n\n  try {\n    const parsedAuthors = JSON.parse(authors);\n\n    if (Array.isArray(parsedAuthors)) {\n      authors = parsedAuthors.join(', ');\n    }\n  } catch (error) {\n    // Keep the original author value\n  }\n\n  return {\n    json: {\n      ...row,\n      facebookText: `${row.Summary}\\n\\nAuthor: ${authors}`,\n      facebookImage: row['Image URL']\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        304
+      ],
+      "id": "0aaa3365-6be4-4541-9239-aa457948a90c",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n\"api_key\": \"PPNvOcsRQf4Zx2fqGIty8iZIDfAtqpD2A9Pqms9-jqu\", \"facebook_id\": \"6a8d10b0ccaf649a670f5b86\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        736,
+        304
+      ],
+      "id": "1f18aa30-b867-4003-a2cf-b16efdfd3a70",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.buffer.com",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    query: `mutation CreatePost($input: CreatePostInput!) {\n      createPost(input: $input) {\n        __typename\n        ... on PostActionSuccess {\n          post {\n            id\n          }\n        }\n      }\n    }`,\n    variables: {\n      input: {\n        channelId: $json.facebook_id,\n        text: $('Code in JavaScript1').item.json.facebookText,\n        schedulingType: \"automatic\",\n        mode: \"shareNow\",\n        metadata: {\n          facebook: {\n            type: \"post\"\n          }\n        },\n        assets: {\n          image: {\n            url: $('Get row(s) in sheet').item.json['Image URL']\n          }\n        }\n      }\n    }\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1008,
+        288
+      ],
+      "id": "a546a744-4d9a-4771-9239-fe63e32739f3",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "EB1CdyPOzj5vV3Br",
+          "name": "Custom Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5910b7e0-d9a7-45e9-87b7-511b6c870db0",
+              "leftValue": "={{ $json.data?.createPost?.post?.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1248,
+        304
+      ],
+      "id": "406304a3-d849-41a6-9738-818ca79c5d6d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M",
+          "mode": "list",
+          "cachedResultName": "TechCrunch Scraping",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H5R47Ddnifg5BpET3FFfChfdSpeWr2ZvzwXLHja-n9M/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Post ID": "={{ $('Code in JavaScript1').item.json['Post ID'] }}",
+            "Posted": "={{ true }}"
+          },
+          "matchingColumns": [
+            "Post ID"
+          ],
+          "schema": [
+            {
+              "id": "Post ID",
+              "displayName": "Post ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Image URL",
+              "displayName": "Image URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Author",
+              "displayName": "Author",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Posted Date",
+              "displayName": "Posted Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Posted",
+              "displayName": "Posted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1504,
+        288
+      ],
+      "id": "8d8da2ed-abe2-428f-a064-baa36e83d4ae",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "D37khZ9LQx9cayAM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        32,
+        320
+      ],
+      "id": "cdfed8e8-8367-487b-83df-56b32bface1a",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Get Article Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Article Content": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a7b29afe-94ac-4819-891d-46903784294d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4acf5f8d4f88027ba8f3a8008dbbd8b10cbc5a6eb40f3087431f0d9a98785434"
+  },
+  "nodeGroups": [],
+  "id": "4Woi08Er4Bp8fzlK",
+  "tags": []
+}
